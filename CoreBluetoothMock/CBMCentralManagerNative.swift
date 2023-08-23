@@ -99,6 +99,18 @@ public class CBMCentralManagerNative: CBMCentralManager {
                                              didUpdateANCSAuthorizationFor: getPeripheral(peripheral))
         }
         #endif
+
+        func centralManager(_ central: CBCentralManager,
+                        didDisconnectPeripheral peripheral: CBPeripheral,
+                        timestamp: CFAbsoluteTime,
+                        isReconnecting: Bool,
+                        error: Error?) {
+            manager.delegate?.centralManager(manager,
+                                            didDisconnectPeripheral: getPeripheral(peripheral),
+                                            timestamp: timestamp,
+                                            isReconnecting: isReconnecting,
+                                            error: error)
+        }
         
         #if !os(macOS)
         @available(iOS 13.0, *)

@@ -42,6 +42,7 @@ open class CBMCentralManagerDelegateProxy: NSObject, CBMCentralManagerDelegate {
     public var didDisconnect: ((CBMCentralManager, CBMPeripheral, Error?) -> ())?
     public var connectionEventDidOccur: ((CBMCentralManager, CBMConnectionEvent, CBMPeripheral) -> ())?
     public var didUpdateANCSAuthorization: ((CBMCentralManager, CBMPeripheral) -> ())?
+    public var didDisconnectPeripheral: ((CBMCentralManager, CBMPeripheral, CFAbsoluteTime, Bool, Error?) -> ())?
     
     open func centralManagerDidUpdateState(_ central: CBMCentralManager) {
         didUpdateState?(central)
@@ -87,5 +88,13 @@ open class CBMCentralManagerDelegateProxy: NSObject, CBMCentralManagerDelegate {
     open func centralManager(_ central: CBMCentralManager,
                                didUpdateANCSAuthorizationFor peripheral: CBMPeripheral) {
         didUpdateANCSAuthorization?(central, peripheral)
+    }
+
+    open func centralManager(_ central: CBMCentralManager,
+                        didDisconnectPeripheral peripheral: CBMPeripheral,
+                        timestamp: CFAbsoluteTime,
+                        isReconnecting: Bool,
+                        error: Error?) {
+        didDisconnectPeripheral?(central, peripheral, timestamp, isReconnecting, error)
     }
 }

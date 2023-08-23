@@ -1,32 +1,32 @@
 /*
-* Copyright (c) 2020, Nordic Semiconductor
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without modification,
-* are permitted provided that the following conditions are met:
-*
-* 1. Redistributions of source code must retain the above copyright notice, this
-*    list of conditions and the following disclaimer.
-*
-* 2. Redistributions in binary form must reproduce the above copyright notice, this
-*    list of conditions and the following disclaimer in the documentation and/or
-*    other materials provided with the distribution.
-*
-* 3. Neither the name of the copyright holder nor the names of its contributors may
-*    be used to endorse or promote products derived from this software without
-*    specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-* PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-* POSSIBILITY OF SUCH DAMAGE.
-*/
+ * Copyright (c) 2020, Nordic Semiconductor
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this
+ *    list of conditions and the following disclaimer in the documentation and/or
+ *    other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors may
+ *    be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 import CoreBluetooth
 
@@ -48,7 +48,7 @@ public protocol CBMCentralManagerDelegate: AnyObject {
     /// manager become invalid and must be retrieved or discovered again.
     /// - Parameter central: The central manager whose state has changed.
     func centralManagerDidUpdateState(_ central: CBMCentralManager)
-    
+
     /// For apps that opt-in to state preservation and restoration, this is the
     /// first method invoked when your app is relaunched into the background to
     /// complete some Bluetooth-related task. Use this method to synchronize your
@@ -62,7 +62,7 @@ public protocol CBMCentralManagerDelegate: AnyObject {
     ///           preserved by the system at the time the app was terminated.
     func centralManager(_ central: CBMCentralManager,
                         willRestoreState dict: [String : Any])
-    
+
     /// This method is invoked while scanning, upon the discovery of peripheral by
     /// central. A discovered peripheral must be retained in order to use it;
     /// otherwise, it is assumed to not be of interest and will be cleaned up by
@@ -79,7 +79,7 @@ public protocol CBMCentralManagerDelegate: AnyObject {
                         didDiscover peripheral: CBMPeripheral,
                         advertisementData: [String : Any],
                         rssi RSSI: NSNumber)
-    
+
     /// This method is invoked when a connection initiated by
     /// ``CBMCentralManager/connect(_:options:)`` has succeeded.
     /// - Parameters:
@@ -87,7 +87,7 @@ public protocol CBMCentralManagerDelegate: AnyObject {
     ///   - peripheral: The ``CBMPeripheral`` that has connected.
     func centralManager(_ central: CBMCentralManager,
                         didConnect peripheral: CBMPeripheral)
-    
+
     /// This method is invoked when a connection initiated by ``CBMCentralManager/connect(_:options:)``
     /// has failed to complete. As connection attempts do not timeout, the failure
     /// of a connection is atypical and usually indicative of a transient issue.
@@ -98,7 +98,7 @@ public protocol CBMCentralManagerDelegate: AnyObject {
     func centralManager(_ central: CBMCentralManager,
                         didFailToConnect peripheral: CBMPeripheral,
                         error: Error?)
-    
+
     /// This method is invoked upon the disconnection of a peripheral that was
     /// connected by ``CBMCentralManager/connect(_:options:)``.
     /// If the disconnection was not initiated by
@@ -113,7 +113,7 @@ public protocol CBMCentralManagerDelegate: AnyObject {
     func centralManager(_ central: CBMCentralManager,
                         didDisconnectPeripheral peripheral: CBMPeripheral,
                         error: Error?)
-    
+
     /// This method is invoked upon the connection or disconnection of a
     /// peripheral that matches any of the options provided in
     /// ``CBMCentralManager/registerForConnectionEvents(options:)``.
@@ -125,7 +125,7 @@ public protocol CBMCentralManagerDelegate: AnyObject {
     func centralManager(_ central: CBMCentralManager,
                         connectionEventDidOccur event: CBMConnectionEvent,
                         for peripheral: CBMPeripheral)
-    
+
     /// This method is invoked when the authorization status changes for a
     /// peripheral connected with ``CBMCentralManager/connect(_:options:)``
     /// option ``CBMConnectPeripheralOptionRequiresANCS``.
@@ -137,6 +137,22 @@ public protocol CBMCentralManagerDelegate: AnyObject {
     @available(iOS 13.0, *)
     func centralManager(_ central: CBMCentralManager,
                         didUpdateANCSAuthorizationFor peripheral: CBMPeripheral)
+
+    /// This method is invoked to notify the caller about a disconnection
+    /// when ``CBConnectPeripheralOptionEnableAutoReconnect`` is set.
+    ///
+    /// - Important: This method is not implemented in mock central manager.
+    /// - Parameters:
+    ///   - central: The central manager providing this information.
+    ///   - peripheral: The ``CBMPeripheral`` that caused the event.
+    ///   - timestamp: Timestamp of the disconnection, it can be now or a few seconds ago.
+    ///   - isReconnecting: If reconnect was triggered upon disconnection.
+    ///   - error: If an error occurred, the cause of the failure.
+    func centralManager(_ central: CBMCentralManager,
+                        didDisconnectPeripheral peripheral: CBMPeripheral,
+                        timestamp: CFAbsoluteTime,
+                        isReconnecting: Bool,
+                        error: Error?)
 }
 
 public extension CBMCentralManagerDelegate {
@@ -180,6 +196,14 @@ public extension CBMCentralManagerDelegate {
     @available(iOS 13.0, *)
     func centralManager(_ central: CBMCentralManager,
                         didUpdateANCSAuthorizationFor peripheral: CBMPeripheral) {
+        // optional method
+    }
+
+    func centralManager(_ central: CBCentralManager,
+                        didDisconnectPeripheral peripheral: CBPeripheral,
+                        timestamp: CFAbsoluteTime,
+                        isReconnecting: Bool,
+                        error: Error?) {
         // optional method
     }
 }
