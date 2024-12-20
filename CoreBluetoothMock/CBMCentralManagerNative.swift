@@ -35,7 +35,8 @@ import CoreBluetooth
 ///
 /// This manager can only interact with physical Bluetooth LE devices.
 public class CBMCentralManagerNative: CBMCentralManager {
-    private var manager: CBCentralManager!
+    var observation: NSKeyValueObservation?
+    @objc dynamic private var manager: CBCentralManager!
     private var wrapper: CBCentralManagerDelegate!
     private var peripherals: [UUID : CBMPeripheralNative] = [:]
     
@@ -89,6 +90,7 @@ public class CBMCentralManagerNative: CBMCentralManager {
             manager.delegate?.centralManager(manager,
                                              didDisconnectPeripheral: getPeripheral(peripheral),
                                              error: error)
+            removePeripheral(peripheral)
         }
         
         #if !os(macOS)
@@ -132,6 +134,10 @@ public class CBMCentralManagerNative: CBMCentralManager {
             manager.peripherals[peripheral.identifier] = p
             return p
         }
+
+        private func removePeripheral(_ peripheral: CBPeripheral) {
+            manager.peripherals[peripheral.identifier] = nil
+        }
     }
     
     private class CBMCentralManagerDelegateWrapperWithRestoration: CBMCentralManagerDelegateWrapper {
@@ -142,7 +148,15 @@ public class CBMCentralManagerNative: CBMCentralManager {
         
         func centralManager(_ central: CBCentralManager,
                             willRestoreState dict: [String : Any]) {
-            manager.delegate?.centralManager(manager, willRestoreState: dict)
+            var state = dict
+            
+            if let peripherals = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] {
+                state[CBMCentralManagerRestoredStatePeripheralsKey] = peripherals.map {
+                    CBMPeripheralNative($0)
+                }
+            }
+                        
+            manager.delegate?.centralManager(manager, willRestoreState: state)
         }
     }
     
@@ -152,7 +166,12 @@ public class CBMCentralManagerNative: CBMCentralManager {
     
     @available(iOS 9.0, *)
     public override var isScanning: Bool {
-        return manager.isScanning
+        get {
+            manager.isScanning
+        }
+        set {
+            
+        }
     }
     
     @available(iOS, introduced: 13.0, deprecated: 13.1)
@@ -180,6 +199,8 @@ public class CBMCentralManagerNative: CBMCentralManager {
         self.wrapper = CBMCentralManagerDelegateWrapper(self)
         self.manager = CBCentralManager()
         self.manager.delegate = wrapper
+        
+        self.addManagerObserver()
     }
     
     public init(delegate: CBMCentralManagerDelegate?,
@@ -188,6 +209,8 @@ public class CBMCentralManagerNative: CBMCentralManager {
         self.wrapper = CBMCentralManagerDelegateWrapper(self)
         self.manager = CBCentralManager(delegate: wrapper, queue: queue)
         self.delegate = delegate
+        
+        self.addManagerObserver()
     }
     
     @available(iOS 7.0, *)
@@ -201,6 +224,8 @@ public class CBMCentralManagerNative: CBMCentralManager {
             CBMCentralManagerDelegateWrapper(self)
         self.manager = CBCentralManager(delegate: wrapper, queue: queue, options: options)
         self.delegate = delegate
+        
+        self.addManagerObserver()
     }
     
     public override func scanForPeripherals(withServices serviceUUIDs: [CBMUUID]?,
@@ -250,6 +275,15 @@ public class CBMCentralManagerNative: CBMCentralManager {
         manager.registerForConnectionEvents(options: options)
     }
     #endif
+    
+    /// Add observer for `\.CBCentralManager.isScanning`  and change `Self.isScanning` correspondingly.
+    private func addManagerObserver() {
+        observation = observe(\.manager?.isScanning, options: [.old, .new]) { _, change in
+            change.newValue?.flatMap { [weak self] new in
+                self?.isScanning = new
+            }
+        }
+    }
 }
 
 /// A native implementation of ``CBMPeripheral`` that will proxy all requests to an underlying `CBPeripheral`.
@@ -396,7 +430,7 @@ public class CBMPeripheralNative: CBMPeer, CBMPeripheral {
             impl.delegate?.peripheral(impl, didOpen: channel, error: error)
         }
         
-        /// Updates the local list of serivces with received ones.
+        /// Updates the local list of services with received ones.
         /// - Parameter services: New list of services.
         private func smartCopy(_ services: [CBService]?) {
             guard let services = services else {
@@ -517,7 +551,7 @@ public class CBMPeripheralNative: CBMPeer, CBMPeripheral {
     }
     #endif
     
-    fileprivate let peripheral: CBPeripheral
+    public let peripheral: CBPeripheral
     
     fileprivate init(_ peripheral: CBPeripheral) {
         self.peripheral = peripheral

@@ -81,7 +81,7 @@ open class CBMCentralManagerMock: CBMCentralManager {
             // ...stop scanning if state changed to any other state
             // than `.poweredOn`. Also, forget all peripherals.
             if manager.state != .poweredOn {
-                manager._isScanning = false
+                manager.isScanning = false
                 manager.scanFilter = nil
                 manager.scanOptions = nil
                 manager.peripherals.values.forEach { $0.closeManager() }
@@ -123,6 +123,7 @@ open class CBMCentralManagerMock: CBMCentralManager {
     ///   - config: Advertisement configuration to start.
     ///   - mock: The advertising mock peripheral.
     private static func startAdvertising(_ config: CBMAdvertisementConfig, for mock: CBMPeripheralSpec) {
+        
         // A valid advertising config is a single time advertisement (delay > 0),
         // or a periodic one (interval > 0) (or both - delayed periodic advertisement).
         // Not to be mistaken with "Periodic Advertisement" from Advertising Extension.
@@ -206,7 +207,7 @@ open class CBMCentralManagerMock: CBMCentralManager {
         guard mock.proximity != .outOfRange else {
             return
         }
-        // If the device is connected and does not advetise in that state, skip.
+        // If the device is connected and does not advertise in that state, skip.
         guard !mock.isConnected || config.isAdvertisingWhenConnected else {
             return
         }
@@ -234,7 +235,7 @@ open class CBMCentralManagerMock: CBMCentralManager {
                 let peripheral = manager.peripherals[mock.identifier]!
                 
                 // If the Allow Duplicates flag was not set and the device was already reported,
-                // don't report it for th second time
+                // don't report it for the second time
                 let allowDuplicates = manager.scanOptions?[CBMCentralManagerScanOptionAllowDuplicatesKey] as? NSNumber ?? false as NSNumber
                 if !peripheral.wasScanned || allowDuplicates.boolValue {
                     // Remember the scanned name from the last advertising packet.
@@ -287,13 +288,10 @@ open class CBMCentralManagerMock: CBMCentralManager {
             CBMCentralManagerMock.managers.contains { $0.ref == self }
         }
     }
-    /// A flag set to true when the manager is scanning for mock Bluetooth LE devices.
-    private var _isScanning: Bool
     
     // MARK: - Initializers
     
     public init() {
-        self._isScanning = false
         self.queue = DispatchQueue.main
         super.init(true)
         initialize()
@@ -301,7 +299,6 @@ open class CBMCentralManagerMock: CBMCentralManager {
     
     public init(delegate: CBMCentralManagerDelegate?,
                 queue: DispatchQueue?) {
-        self._isScanning = false
         self.queue = queue ?? DispatchQueue.main
         super.init(true)
         self.delegate = delegate
@@ -312,7 +309,6 @@ open class CBMCentralManagerMock: CBMCentralManager {
     public init(delegate: CBMCentralManagerDelegate?,
                 queue: DispatchQueue?,
                 options: [String : Any]?) {
-        self._isScanning = false
         self.queue = queue ?? DispatchQueue.main
         super.init(true)
         self.delegate = delegate
@@ -352,7 +348,7 @@ open class CBMCentralManagerMock: CBMCentralManager {
     
     // MARK: - Central manager simulation methods
     
-    /// This method may be used to register a list ot ``CBMPeripheralPreview`` should they be used in Swift UI Previews.
+    /// This method may be used to register a list of ``CBMPeripheralPreview`` should they be used in Swift UI Previews.
     ///
     /// Registered peripherals can be connected, retrieved, and respond to basic requests
     /// - Parameter peripherals: The list of peripherals intended for Swift UI purposes.
@@ -367,7 +363,7 @@ open class CBMCentralManagerMock: CBMCentralManager {
     /// All manager delegates will receive a ``CBMManagerState/unknown`` state update.
     public static func tearDownSimulation() {
         stopAdvertising()
-        // Set the state of all currently existing cenral manager instances to
+        // Set the state of all currently existing central manager instances to
         // .unknown, which will make them invalid.
         managerState = .unknown
         // Remove all central manager instances.
@@ -652,9 +648,7 @@ open class CBMCentralManagerMock: CBMCentralManager {
         }
         return CBMCentralManagerMock.managerState
     }
-    open override var isScanning: Bool {
-        return _isScanning
-    }
+    
     
     @available(iOS, introduced: 13.0, deprecated: 13.1)
     @available(macOS, introduced: 10.15)
@@ -662,8 +656,8 @@ open class CBMCentralManagerMock: CBMCentralManager {
     @available(watchOS, introduced: 6.0, deprecated: 6.1)
     open override var authorization: CBMManagerAuthorization {
         if let rawValue = CBMCentralManagerMock.bluetoothAuthorization,
-           let authotization = CBMManagerAuthorization(rawValue: rawValue) {
-            return authotization
+           let authorization = CBMManagerAuthorization(rawValue: rawValue) {
+            return authorization
         } else {
             // If `simulateAuthorization(:)` was not called, .allowedAlways is assumed.
             return .allowedAlways
@@ -685,7 +679,7 @@ open class CBMCentralManagerMock: CBMCentralManager {
                                           options: [String : Any]? = nil) {
         // Central manager must be in powered on state.
         guard ensurePoweredOn() else { return }
-        _isScanning = true
+        isScanning = true
         scanFilter = serviceUUIDs
         scanOptions = options
     }
@@ -693,7 +687,7 @@ open class CBMCentralManagerMock: CBMCentralManager {
     open override func stopScan() {
         // Central manager must be in powered on state.
         guard ensurePoweredOn() else { return }
-        _isScanning = false
+        isScanning = false
         scanFilter = nil
         scanOptions = nil
         peripherals.values.forEach { $0.wasScanned = false }
@@ -879,7 +873,7 @@ open class CBMCentralManagerMock: CBMCentralManager {
 /// This implementation will be used when creating peripherals by ``CBMCentralManagerMock``.
 ///
 /// Unless required, this class should not be accessed directly, but rather by the common protocol ``CBMPeripheral``.
-open class CBMPeripheralMock: CBMPeer, CBMPeripheral {
+@objc open class CBMPeripheralMock: CBMPeer, CBMPeripheral {
     /// The parent central manager.
     private let manager: CBMCentralManagerMock
     /// The dispatch queue to call delegate methods on.
@@ -923,7 +917,7 @@ open class CBMPeripheralMock: CBMPeer, CBMPeripheral {
         return _canSendWriteWithoutResponse
     }
     open private(set) var ancsAuthorized: Bool = false
-    open fileprivate(set) var state: CBMPeripheralState = .disconnected
+    @objc dynamic open fileprivate(set) var state: CBMPeripheralState = .disconnected
     open private(set) var services: [CBMService]? = nil
     
     // MARK: Initializers
@@ -958,7 +952,7 @@ open class CBMPeripheralMock: CBMPeer, CBMPeripheral {
             return
         }
         // If the device is already connected (using a different central manager),
-        // report success immediatly. The device already has the connection with central
+        // report success immediately. The device already has the connection with central
         // and will not be notified about another virtual client connection.
         if isAlreadyConnected {
             queue.async { [weak self] in

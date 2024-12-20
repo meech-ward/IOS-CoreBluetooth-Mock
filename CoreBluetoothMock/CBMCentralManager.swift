@@ -92,7 +92,7 @@ open class CBMCentralManager: NSObject {
     
     /// Whether or not the central is currently scanning.
     @available(iOS 9.0, *)
-    open var isScanning: Bool { return false }
+    @objc dynamic open internal(set) var isScanning: Bool = false
     
     /// The current authorization status for using Bluetooth.
     ///
@@ -105,8 +105,8 @@ open class CBMCentralManager: NSObject {
     @available(watchOS, introduced: 6.0, deprecated: 6.1)
     open var authorization: CBMManagerAuthorization {
         if let rawValue = CBMCentralManagerMock.bluetoothAuthorization,
-           let authotization = CBMManagerAuthorization(rawValue: rawValue) {
-            return authotization
+           let authorization = CBMManagerAuthorization(rawValue: rawValue) {
+            return authorization
         } else {
             return CBCentralManager().authorization
         }
@@ -128,8 +128,8 @@ open class CBMCentralManager: NSObject {
     @available(iOS 13.1, macOS 10.15, tvOS 13.1, watchOS 6.1, *)
     open class var authorization: CBMManagerAuthorization {
         if let rawValue = CBMCentralManagerMock.bluetoothAuthorization,
-           let authotization = CBMManagerAuthorization(rawValue: rawValue) {
-            return authotization
+           let authorization = CBMManagerAuthorization(rawValue: rawValue) {
+            return authorization
         } else {
             return CBCentralManager.authorization
         }
